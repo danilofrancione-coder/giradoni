@@ -177,9 +177,34 @@ function submitForm(){
   if(!prv)bad=true;
   if(bad){err.textContent=!prv?"Accetta la Privacy Policy per continuare":"Compila i campi obbligatori (*)";err.style.display="block";return;}
   user={nome,cognome,email,ente};
-  document.getElementById("form-submit").disabled=true;
-  document.getElementById("form-submit").textContent="Un attimo...";
-  startCountdown(nome);
+  const btn=document.getElementById("form-submit");
+  btn.disabled=true;
+  btn.textContent="Verifico...";
+  checkEmail(email, nome, btn);
+}
+
+function checkEmail(email, nome, btn){
+  const url=APPS_SCRIPT_URL+"?action=check&email="+encodeURIComponent(email);
+  fetch(url)
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.exists){
+        btn.disabled=false;
+        btn.textContent="Gira la ruota!";
+        const err=document.getElementById("form-error");
+        err.textContent="Questa email ha già partecipato. Ogni persona può giocare una sola volta!";
+        err.style.display="block";
+        document.getElementById("f-email").classList.add("error");
+      } else {
+        btn.textContent="Un attimo...";
+        startCountdown(nome);
+      }
+    })
+    .catch(()=>{
+      // Se il check fallisce per errore di rete, lasciamo passare
+      btn.textContent="Un attimo...";
+      startCountdown(nome);
+    });
 }
 
 function send(res){
@@ -229,15 +254,13 @@ function showResult(sg){
   const btn=E("result-btn");btn.style.display="block";btn.textContent="Ritira il tuo premio allo stand 🎁";
   if(sg.type==="spark"){
     E("result-emoji").textContent="🕶";
-    E("result-label").textContent="Primo Premio";
-    E("result-label").style.cssText="display:inline-block;background:rgba(245,184,48,0.15);border:1px solid rgba(245,184,48,0.35);color:#F5B830;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:14px";
-    E("result-title").textContent="Hai vinto!";E("result-title").style.color="#F5B830";
+    E("result-label").style.cssText="display:none";
+    E("result-title").innerHTML="Hai vinto il Premio 🕶";E("result-title").style.color="#F5B830";
     E("result-subtitle").innerHTML="Complimenti, <strong>"+nome+"</strong>! 🎉<br>Fai uno screenshot e mostralo allo stand per ritirare il tuo premio.";
   } else if(sg.type==="impact"){
     E("result-emoji").textContent="🧠";
-    E("result-label").textContent="Secondo Premio";
-    E("result-label").style.cssText="display:inline-block;background:rgba(61,158,158,0.15);border:1px solid rgba(61,158,158,0.35);color:#3D9E9E;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:14px";
-    E("result-title").textContent="Hai vinto!";E("result-title").style.color="#3D9E9E";
+    E("result-label").style.cssText="display:none";
+    E("result-title").innerHTML="Hai vinto il Premio 🧠";E("result-title").style.color="#3D9E9E";
     E("result-subtitle").innerHTML="Fantastico, <strong>"+nome+"</strong>! 🎉<br>Fai uno screenshot e mostralo allo stand per ritirare il tuo premio speciale.";
   } else {
     E("result-emoji").textContent="";
